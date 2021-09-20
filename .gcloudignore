@@ -7,6 +7,7 @@ src/
 .gitignore
 .prettierrc
 nodemon.json
+payment-gateways.json
 payment-gateways.template.json
 README.md
 tsconfig.json
