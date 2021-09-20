@@ -1,7 +1,7 @@
 {
     "name": "clikalia-test",
     "version": "1.0.0",
-    "description": "Backoffice and payment gateway integration for Clikalia technical test",
+    "description": "Payment gateway integration backend for Clikalia technical test",
     "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
