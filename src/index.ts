@@ -4,20 +4,27 @@ import {
     payHandler,
     reimburseHandler
 } from './controllers/payment-gateways';
+import { GatewayConfigRepository } from './types';
+import { GcloudConfigRepository } from './repositories/gcloud-config';
+import { LocalConfigRepository } from './repositories/local-config';
 import express from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const gatewayConfigRepository: GatewayConfigRepository =
+    process.env.GCLOUD_STORAGE_BUCKET !== undefined
+        ? GcloudConfigRepository(process.env.GCLOUD_STORAGE_BUCKET)
+        : LocalConfigRepository();
 
-app.get('/active-gateways', activePaymentGatewaysHandler);
+app.get('/active-gateways', activePaymentGatewaysHandler(gatewayConfigRepository));
 
-app.post('/pay', express.json(), payHandler);
+app.post('/pay', express.json(), payHandler(gatewayConfigRepository));
 
-app.post('/reimburse', express.json(), reimburseHandler);
+app.post('/reimburse', express.json(), reimburseHandler(gatewayConfigRepository));
 
-app.put('/admin/gateway-status', express.json(), gatewayStatusHandler);
+app.put('/admin/gateway-status', express.json(), gatewayStatusHandler(gatewayConfigRepository));
 
 const swaggerOptions: swaggerJsdoc.Options = {
     definition: {

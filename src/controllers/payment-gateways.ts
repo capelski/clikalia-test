@@ -1,10 +1,5 @@
-import {
-    getActivePaymentGateways,
-    getAllPaymentGateways,
-    pay,
-    reimburse,
-    updatePaymentGateways
-} from '../services/payment-gateways';
+import { pay, reimburse } from '../services/payment-gateways';
+import { GatewayConfigRepository } from '../types';
 import { RequestHandler } from 'express';
 
 /**
@@ -18,16 +13,21 @@ import { RequestHandler } from 'express';
  *              500:
  *                  description: Unexpected error retrieving the active payment gateways
  */
-export const activePaymentGatewaysHandler: RequestHandler = (_req, res) => {
-    return getActivePaymentGateways()
-        .then((paymentGateways) => {
-            return res.json(paymentGateways.map((x) => x.name));
-        })
-        .catch((error) => {
-            console.error(error);
-            return res.status(500).json({ message: "Couldn't retrieve active payment gateways" });
-        });
-};
+export const activePaymentGatewaysHandler =
+    (gatewayConfigRepository: GatewayConfigRepository): RequestHandler =>
+    (_req, res) => {
+        return gatewayConfigRepository
+            .getActivePaymentGateways()
+            .then((paymentGateways) => {
+                return res.json(paymentGateways.map((x) => x.name));
+            })
+            .catch((error) => {
+                console.error(error);
+                return res
+                    .status(500)
+                    .json({ message: "Couldn't retrieve active payment gateways" });
+            });
+    };
 
 /**
  * @openapi
@@ -53,32 +53,34 @@ export const activePaymentGatewaysHandler: RequestHandler = (_req, res) => {
  *              500:
  *                  description: Unexpected error while handling payment
  */
-export const payHandler: RequestHandler = (req, res) => {
-    const { gatewayName } = req.body;
+export const payHandler =
+    (gatewayConfigRepository: GatewayConfigRepository): RequestHandler =>
+    (req, res) => {
+        const { gatewayName } = req.body;
 
-    if (!gatewayName) {
-        return res.status(400).json({ message: 'Missing gateway name' });
-    } else {
-        return getActivePaymentGateways().then((activeGateways) => {
-            const selectedGateway = activeGateways.find((g) => g.name === gatewayName);
+        if (!gatewayName) {
+            return res.status(400).json({ message: 'Missing gateway name' });
+        } else {
+            return gatewayConfigRepository.getActivePaymentGateways().then((activeGateways) => {
+                const selectedGateway = activeGateways.find((g) => g.name === gatewayName);
 
-            if (!selectedGateway) {
-                return res.status(400).json({ message: 'Bad gateway name provided' });
-            } else {
-                return pay(selectedGateway.name)
-                    .then(() => {
-                        return res.send('Payment ok');
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        return res.status(500).json({
-                            message: `An unexpected error ocurred while handling the payment with ${selectedGateway.name}`
+                if (!selectedGateway) {
+                    return res.status(400).json({ message: 'Bad gateway name provided' });
+                } else {
+                    return pay(selectedGateway.name)
+                        .then(() => {
+                            return res.send('Payment ok');
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            return res.status(500).json({
+                                message: `An unexpected error ocurred while handling the payment with ${selectedGateway.name}`
+                            });
                         });
-                    });
-            }
-        });
-    }
-};
+                }
+            });
+        }
+    };
 
 /**
  * @openapi
@@ -104,32 +106,34 @@ export const payHandler: RequestHandler = (req, res) => {
  *              500:
  *                  description: Unexpected error while handling reimburse
  */
-export const reimburseHandler: RequestHandler = (req, res) => {
-    const { gatewayName } = req.body;
+export const reimburseHandler =
+    (gatewayConfigRepository: GatewayConfigRepository): RequestHandler =>
+    (req, res) => {
+        const { gatewayName } = req.body;
 
-    if (!gatewayName) {
-        return res.status(400).json({ message: 'Missing gateway name' });
-    } else {
-        return getActivePaymentGateways().then((activeGateways) => {
-            const selectedGateway = activeGateways.find((g) => g.name === gatewayName);
+        if (!gatewayName) {
+            return res.status(400).json({ message: 'Missing gateway name' });
+        } else {
+            return gatewayConfigRepository.getActivePaymentGateways().then((activeGateways) => {
+                const selectedGateway = activeGateways.find((g) => g.name === gatewayName);
 
-            if (!selectedGateway) {
-                return res.status(400).json({ message: 'Bad gateway name provided' });
-            } else {
-                return reimburse(selectedGateway.name)
-                    .then(() => {
-                        return res.send('Reimburse ok');
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        return res.status(500).json({
-                            message: `An unexpected error ocurred while handling the reimburse with ${selectedGateway.name}`
+                if (!selectedGateway) {
+                    return res.status(400).json({ message: 'Bad gateway name provided' });
+                } else {
+                    return reimburse(selectedGateway.name)
+                        .then(() => {
+                            return res.send('Reimburse ok');
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            return res.status(500).json({
+                                message: `An unexpected error ocurred while handling the reimburse with ${selectedGateway.name}`
+                            });
                         });
-                    });
-            }
-        });
-    }
-};
+                }
+            });
+        }
+    };
 
 /**
  * @openapi
@@ -159,31 +163,36 @@ export const reimburseHandler: RequestHandler = (req, res) => {
  *              500:
  *                  description: Unexpected error while updating payment gateway
  */
-export const gatewayStatusHandler: RequestHandler = (req, res) => {
-    const { gatewayName, status } = req.body;
+export const gatewayStatusHandler =
+    (gatewayConfigRepository: GatewayConfigRepository): RequestHandler =>
+    (req, res) => {
+        const { gatewayName, status } = req.body;
 
-    if (!gatewayName) {
-        return res.status(400).json({ message: 'Missing gateway name' });
-    } else if (typeof status !== 'boolean') {
-        return res.status(400).json({ message: 'Missing status' });
-    } else {
-        return getAllPaymentGateways()
-            .then((paymentGateways) => {
-                const selectedGateway = paymentGateways.find((g) => g.name === gatewayName);
+        if (!gatewayName) {
+            return res.status(400).json({ message: 'Missing gateway name' });
+        } else if (typeof status !== 'boolean') {
+            return res.status(400).json({ message: 'Missing status' });
+        } else {
+            return gatewayConfigRepository
+                .getAllPaymentGateways()
+                .then((paymentGateways) => {
+                    const selectedGateway = paymentGateways.find((g) => g.name === gatewayName);
 
-                if (!selectedGateway) {
-                    return res.status(400).json({ message: 'Bad gateway name provided' });
-                } else {
-                    return updatePaymentGateways(gatewayName, status).then(() => {
-                        return res.send('Successfully updated payment gateway');
+                    if (!selectedGateway) {
+                        return res.status(400).json({ message: 'Bad gateway name provided' });
+                    } else {
+                        return gatewayConfigRepository
+                            .updatePaymentGateway(gatewayName, status)
+                            .then(() => {
+                                return res.send('Successfully updated payment gateway');
+                            });
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                    return res.status(500).json({
+                        message: `An unexpected error ocurred while updating ${gatewayName}`
                     });
-                }
-            })
-            .catch((error) => {
-                console.error(error);
-                return res.status(500).json({
-                    message: `An unexpected error ocurred while updating ${gatewayName}`
                 });
-            });
-    }
-};
+        }
+    };

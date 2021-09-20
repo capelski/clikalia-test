@@ -1,0 +1,2 @@
+env_variables:
+    GCLOUD_STORAGE_BUCKET: bucket name
