@@ -1,5 +1,6 @@
 import {
     activePaymentGatewaysHandler,
+    gatewayStatusHandler,
     payHandler,
     reimburseHandler
 } from './controllers/payment-gateways';
@@ -15,6 +16,8 @@ app.get('/active-gateways', activePaymentGatewaysHandler);
 app.post('/pay', express.json(), payHandler);
 
 app.post('/reimburse', express.json(), reimburseHandler);
+
+app.put('/admin/gateway-status', express.json(), gatewayStatusHandler);
 
 const swaggerOptions: swaggerJsdoc.Options = {
     definition: {

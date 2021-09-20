@@ -1,23 +1,32 @@
 import { Gateway, GatewayConfig } from '../types';
+import { readFile, writeFile } from 'fs';
 import { join } from 'path';
-import { readFile } from 'fs';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-export const getActivePaymentGateways = (): Promise<GatewayConfig[]> => {
-    return new Promise<GatewayConfig[]>((resolve, reject) => {
-        const paymentsPath = join(__dirname, '..', '..', 'payment-gateways.json');
+const paymentsConfigPath = join(__dirname, '..', '..', 'payment-gateways.json');
 
-        readFile(paymentsPath, (error, data) => {
-            if (error) {
-                reject(error);
-            } else {
-                const content = data.toString();
-                const paymentGateways = JSON.parse(content) as GatewayConfig[];
-                const activeGateways = paymentGateways.filter((x) => x.isActive);
-                resolve(activeGateways);
-            }
-        });
+export const getAllPaymentGateways = (): Promise<GatewayConfig[]> => {
+    return new Promise<GatewayConfig[]>((resolve, reject) => {
+        try {
+            readFile(paymentsConfigPath, (error, data) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    const content = data.toString();
+                    const paymentGateways = JSON.parse(content) as GatewayConfig[];
+                    resolve(paymentGateways);
+                }
+            });
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+export const getActivePaymentGateways = (): Promise<GatewayConfig[]> => {
+    return getAllPaymentGateways().then((gateways) => {
+        return gateways.filter((x) => x.isActive);
     });
 };
 
@@ -51,4 +60,31 @@ export const reimburse = (gatewayName: string): Promise<void> => {
     } catch (error) {
         return Promise.reject(`Error loading ${gatewayName} gateway`);
     }
+};
+
+export const updatePaymentGateways = (gatewayName: string, status: boolean): Promise<void> => {
+    return getAllPaymentGateways().then((gateways) => {
+        const updatedGateways = gateways.map((gateway) => {
+            return gateway.name === gatewayName
+                ? {
+                      ...gateway,
+                      isActive: status
+                  }
+                : gateway;
+        });
+
+        return new Promise((resolve, reject) => {
+            try {
+                writeFile(paymentsConfigPath, JSON.stringify(updatedGateways), (error) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
 };

@@ -1,4 +1,10 @@
-import { getActivePaymentGateways, pay, reimburse } from '../services/payment-gateways';
+import {
+    getActivePaymentGateways,
+    getAllPaymentGateways,
+    pay,
+    reimburse,
+    updatePaymentGateways
+} from '../services/payment-gateways';
 import { RequestHandler } from 'express';
 
 /**
@@ -122,5 +128,62 @@ export const reimburseHandler: RequestHandler = (req, res) => {
                     });
             }
         });
+    }
+};
+
+/**
+ * @openapi
+ * /admin/gateway-status:
+ *      put:
+ *          description: Updates the specified payment gateway status
+ *          requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          properties:
+ *                              gatewayName:
+ *                                  type: string
+ *                                  description: The name of the gateway to be updated
+ *                                  example: stripe
+ *                              status:
+ *                                  type: boolean
+ *                                  description: New status of the payment gateway
+ *                                  example: true
+ *          responses:
+ *              200:
+ *                  description: Successfully updated payment gateway
+ *              400:
+ *                  description: Missing or incorrect gateway name or gateway status
+ *              500:
+ *                  description: Unexpected error while updating payment gateway
+ */
+export const gatewayStatusHandler: RequestHandler = (req, res) => {
+    const { gatewayName, status } = req.body;
+
+    if (!gatewayName) {
+        return res.status(400).json({ message: 'Missing gateway name' });
+    } else if (typeof status !== 'boolean') {
+        return res.status(400).json({ message: 'Missing status' });
+    } else {
+        return getAllPaymentGateways()
+            .then((paymentGateways) => {
+                const selectedGateway = paymentGateways.find((g) => g.name === gatewayName);
+
+                if (!selectedGateway) {
+                    return res.status(400).json({ message: 'Bad gateway name provided' });
+                } else {
+                    return updatePaymentGateways(gatewayName, status).then(() => {
+                        return res.send('Successfully updated payment gateway');
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                return res.status(500).json({
+                    message: `An unexpected error ocurred while updating ${gatewayName}`
+                });
+            });
     }
 };
