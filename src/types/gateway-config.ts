@@ -1,4 +1,4 @@
-export type PaymentGateway = {
+export type GatewayConfig = {
     isActive: boolean;
     name: string;
 };
