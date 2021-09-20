@@ -1,6 +1,17 @@
 import { getActivePaymentGateways, pay, reimburse } from '../services/payment-gateways';
 import { RequestHandler } from 'express';
 
+/**
+ * @openapi
+ * /active-gateways:
+ *      get:
+ *          description: Returns a list of all active payment gateways name
+ *          responses:
+ *              200:
+ *                  description: Active payment gateways name
+ *              500:
+ *                  description: Unexpected error retrieving the active payment gateways
+ */
 export const activePaymentGatewaysHandler: RequestHandler = (_req, res) => {
     return getActivePaymentGateways()
         .then((paymentGateways) => {
@@ -12,6 +23,30 @@ export const activePaymentGatewaysHandler: RequestHandler = (_req, res) => {
         });
 };
 
+/**
+ * @openapi
+ * /pay:
+ *      post:
+ *          description: Process a payment with the provided payment gateway
+ *          requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          properties:
+ *                              gatewayName:
+ *                                  type: string
+ *                                  description: The name of the gateway to use for the payment
+ *                                  example: stripe
+ *          responses:
+ *              200:
+ *                  description: Successfully processed payment
+ *              400:
+ *                  description: Missing or incorrect gateway name
+ *              500:
+ *                  description: Unexpected error while handling payment
+ */
 export const payHandler: RequestHandler = (req, res) => {
     const { gatewayName } = req.body;
 
@@ -39,6 +74,30 @@ export const payHandler: RequestHandler = (req, res) => {
     }
 };
 
+/**
+ * @openapi
+ * /reimburse:
+ *      post:
+ *          description: Reimburse a payment with the provided payment gateway
+ *          requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          properties:
+ *                              gatewayName:
+ *                                  type: string
+ *                                  description: The name of the gateway to use for the reimburse
+ *                                  example: stripe
+ *          responses:
+ *              200:
+ *                  description: Successfully processed reimburse
+ *              400:
+ *                  description: Missing or incorrect gateway name
+ *              500:
+ *                  description: Unexpected error while handling reimburse
+ */
 export const reimburseHandler: RequestHandler = (req, res) => {
     const { gatewayName } = req.body;
 
