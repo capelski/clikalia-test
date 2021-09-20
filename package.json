@@ -7,7 +7,7 @@
         "build": "tsc",
         "dev": "nodemon",
         "lint": "eslint ./src --ext .ts",
-        "prettier": "prettier src/**/*.ts --write",
+        "prettier": "prettier src/**/*.ts --check",
         "start": "node dist/index.js"
     },
     "keywords": [],
