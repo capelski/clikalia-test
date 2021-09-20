@@ -27,7 +27,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
         },
         openapi: '3.0.0'
     },
-    apis: ['./src/controllers/*.ts']
+    apis: ['./src/controllers/*.ts', './dist/controllers/*.js']
 };
 
 const openApiSpecification = swaggerJsdoc(swaggerOptions);
